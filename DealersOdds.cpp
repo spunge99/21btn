@@ -88,7 +88,7 @@ void DealersOdds::printRow(map<string, double>& hand_odds, int hand_number, int 
 		}
 	}
 
-	
+	//Totals row of odds for error checking, should be 1.000
 	if(false){
 		double row_total = hand_odds["17"]+hand_odds["18"]+hand_odds["19"]+hand_odds["20"]+hand_odds["21"]+hand_odds["Bust"];
 		stemp = to_string(row_total).substr(0,5);
@@ -105,6 +105,7 @@ template<typename T> void DealersOdds::printCell(T t, const int& width, const ch
 
 void DealersOdds::play_all_hands(DeckOfCards deck) {
 	
+	init_odds_matrix(dealers_odds);
 	string hand = "A";
 	int count = 11;
 	bool soft = true;
