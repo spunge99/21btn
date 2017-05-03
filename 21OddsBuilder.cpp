@@ -1,29 +1,39 @@
-/*Use "g++ -std=c++0x -o test 21OddsBuilder.cpp" to compile*/
+/*
+Copyright © 2017 Matt Share.
+
+*/
+/*Use "g++ -std=c++0x 21OddsBuilder.cpp" to compile*/
 
 #include <getopt.h>
 #include <iostream>
 #include <iomanip>
 #include <map>
+#include <fstream>
+#include <sstream>
 #include "DeckOfCards.h"
 #include "DealersOdds.h"
 #include "PlayersEV.h"
 
 using namespace std;
-static int number_of_decks = 1;
-static int hit_on_soft_17 = 0;
-
-int total = 0;
+static const string CONFIG_FILE_NAME = "config.txt";
+static map<string, string> CONFIG;
+static int HIT_ON_SOFT_17 = 0;
 
 struct option long_options[] =
 {
-  {"number of decks",   required_argument, NULL, 'd'},
-  {"hit",   no_argument, &hit_on_soft_17, 1},
+  {"number_of_decks",   required_argument, NULL, 'd'},
+  {"hit",   no_argument, &HIT_ON_SOFT_17, 1},
   { 0, 0, 0, 0 }
 };
+
+void load_Config(string);
+void init_Config();
 
 int main(int argc, char** argv)
 {
     int c, option_index=0;
+	string::size_type sz;
+	load_Config(CONFIG_FILE_NAME);
 	
 	while ((c = getopt_long (argc, argv, "d:", long_options, &option_index)) != EOF)
     {
@@ -32,24 +42,54 @@ int main(int argc, char** argv)
 			case 0:
 				break;
 			case 'd':
-					number_of_decks = atoi(optarg);
-					cout << "number of decks = "<< number_of_decks <<"\n";
+					CONFIG["NUMBER_OF_DECKS"] = optarg;
 					break;
  	    }
-    } 
-	if(hit_on_soft_17){
-		cout << "Dealer hits on soft 17\n";
-	}
+    }
+	cout << "number of decks = "<< CONFIG["NUMBER_OF_DECKS"] <<"\n";
+	if(HIT_ON_SOFT_17)
+		CONFIG["HIT_ON_SOFT_17"] = to_string(HIT_ON_SOFT_17);
+	string message = stoi(CONFIG["HIT_ON_SOFT_17"], &sz) ? "Dealer hits on soft 17\n" : "Dealer stays on soft 17\n";
+	cout << message;
 	
-	DeckOfCards deck;
+	DeckOfCards deck(stoi(CONFIG["NUMBER_OF_DECKS"], &sz));
 
-	DealersOdds dodds(hit_on_soft_17, deck);
-
-	dodds.print_odds(8);
+	DealersOdds dodds(stoi(CONFIG["HIT_ON_SOFT_17"], &sz), deck);
+	
+	//dodds.print_odds(stoi(CONFIG["CELL_WIDTH"], &sz));
+	
+	dodds.get_single_hand_odds(6, deck);
+	dodds.print_header(stoi(CONFIG["CELL_WIDTH"], &sz), dodds.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
+	dodds.print_row(dodds.get_dealers_odds()[6], 6, stoi(CONFIG["CELL_WIDTH"], &sz), dodds.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
 	
 	PlayersEV pev;
-	pev.print_out();
-
+	pair<int, int> players_hand(11,11);
+	pev.print_ev_header(stoi(CONFIG["CELL_WIDTH"], &sz), pev.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
+	pev.print_ev_row(players_hand, 6, stoi(CONFIG["CELL_WIDTH"], &sz), pev.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
+	
+	//pev.print_ev_table(stoi(CONFIG["CELL_WIDTH"], &sz));
 	
     return 0;
+}
+
+void load_Config(string config_file_name) {
+	init_Config();
+	ifstream file;
+	file.open(config_file_name);
+	string line;
+	while(getline(file, line)) {
+		istringstream iss(line);
+		string key, value;
+		if(getline(iss, key, '=')) {
+			if(getline(iss, value)) {
+				CONFIG[key] = value;
+			}
+		}
+	}
+	file.close();
+}
+
+void init_Config() {
+	CONFIG["NUMBER_OF_DECKS"] = "1";
+	CONFIG["HIT_ON_SOFT_17"] = "0";
 }

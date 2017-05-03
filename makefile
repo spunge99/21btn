@@ -11,7 +11,7 @@ DeckOfCards.o: DeckOfCards.h DeckOfCards.cpp
 DealersOdds.o: DealersOdds.h DealersOdds.cpp DeckOfCards.h
 	$(CC) $(CFLAGS) -c DealersOdds.cpp
 	
-PlayersEV.o: PlayersEV.h PlayersEV.cpp DeckOfCards.h
+PlayersEV.o: PlayersEV.h PlayersEV.cpp DeckOfCards.h DealersOdds.h
 	$(CC) $(CFLAGS) -c PlayersEV.cpp
 
 21OddsBuilder.o: 21OddsBuilder.cpp DeckOfCards.h DealersOdds.h PlayersEV.h

@@ -39,6 +39,13 @@ void DealersOdds::init_hand_odds(map<string, double>& hand_odds) {
 }
 
 void DealersOdds::print_odds(int width) {
+	print_header(width, get_divider(width));
+	for(int i = 11; i > 1; i--){
+		print_row(dealers_odds[i], i, width, get_divider(width));
+	}
+}
+
+string DealersOdds::get_divider(int width) {
 	string divider;
 	string div_char = " ";
 	for(int x = 0; x < width; x++) {
@@ -48,43 +55,44 @@ void DealersOdds::print_odds(int width) {
 		divider += div_char;
 	}
 	divider += " \n";
-	
-	cout << divider;
-	printCell("     ", width, ' ');
-	printCell("17   ", width, ' ');
-	printCell("18   ", width, ' ');
-	printCell("19   ", width, ' ');
-	printCell("20   ", width, ' ');
-	printCell("21   ", width, ' ');
-	printCell("Bust  ", width, ' ');
-	cout << "|\n";
-	cout << divider;
-	for(int i = 11; i > 1; i--){
-		printRow(dealers_odds[i], i, width, divider);
-	}
+	return divider;
 }
 
-void DealersOdds::printRow(map<string, double>& hand_odds, int hand_number, int width, string divider){
+void DealersOdds::print_header(int width, string divider) {
+	cout << divider;
+	print_cell("     ", width, ' ');
+	print_cell("17   ", width, ' ');
+	print_cell("18   ", width, ' ');
+	print_cell("19   ", width, ' ');
+	print_cell("20   ", width, ' ');
+	print_cell("21   ", width, ' ');
+	print_cell("Bust  ", width, ' ');
+	cout << "|\n";
+	cout << divider;
+
+}
+
+void DealersOdds::print_row(map<string, double>& hand_odds, int hand_number, int width, string divider){
 	string stemp = "";
 	
 	stemp = to_string(hand_number);
 	if(hand_number == 11){
 		stemp = "Ace";
 	}
-	printCell(stemp+"   ", width, ' ');
+	print_cell(stemp+"   ", width, ' ');
 	
 	for(map<string, double>::iterator iter = hand_odds.begin(); iter!=hand_odds.end(); iter++){
 		if(iter->second > 0) {
 			stemp = to_string(iter->second).substr(1,4);
-			printCell(stemp+"   ", width, ' ');
+			print_cell(stemp+"   ", width, ' ');
 		}
 		else if(iter->second == 0) {
 			stemp = "- ";
-			printCell(stemp+"   ", width, ' ');
+			print_cell(stemp+"   ", width, ' ');
 		}
 		else {
 			stemp = to_string(iter->second).substr(0,6);
-			printCell(stemp+" ", width, ' ');
+			print_cell(stemp+" ", width, ' ');
 		}
 	}
 
@@ -92,15 +100,27 @@ void DealersOdds::printRow(map<string, double>& hand_odds, int hand_number, int 
 	if(false){
 		double row_total = hand_odds["17"]+hand_odds["18"]+hand_odds["19"]+hand_odds["20"]+hand_odds["21"]+hand_odds["Bust"];
 		stemp = to_string(row_total).substr(0,5);
-		printCell(" "+stemp+"  ", width, ' ');
+		print_cell(" "+stemp+"  ", width, ' ');
 	}
 	
 	cout << "|\n";
 	cout << divider;
 }
 
-template<typename T> void DealersOdds::printCell(T t, const int& width, const char& seperator) {
+template<typename T> void DealersOdds::print_cell(T t, const int& width, const char& seperator) {
 	cout << "|" << setw(width) << setfill(seperator) << t;
+}
+
+map<string, double> DealersOdds::get_single_hand_odds(int initial_card, DeckOfCards deck) {
+	init_odds_matrix(dealers_odds);
+	string hand = to_string(initial_card);
+	bool soft = ((initial_card == 11) ? true : false);
+	int count = initial_card;
+	int last_card = initial_card;
+	double odds = 1.0;
+	play_all_hands_rec(hand, count, soft, initial_card, last_card, deck, odds, dealers_odds);
+	
+	return dealers_odds[initial_card];
 }
 
 void DealersOdds::play_all_hands(DeckOfCards deck) {
