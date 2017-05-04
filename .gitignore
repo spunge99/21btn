@@ -1,5 +1,6 @@
 #Output Data
 *.rtf
+*.stackdump
 
 # Prerequisites
 *.d

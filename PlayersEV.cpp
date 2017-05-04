@@ -2,6 +2,12 @@
 #include "PlayersEV.h"
 
 PlayersEV::PlayersEV() {
+	dealer_hits_on_soft_17 = 0;
+	init_ev_table();
+}
+
+PlayersEV::PlayersEV(int dealer_hits) {
+	dealer_hits_on_soft_17 = dealer_hits;
 	init_ev_table();
 }
 
@@ -31,30 +37,137 @@ void PlayersEV::init_hand_ev(map<string, double>& hand_ev) {
 	hand_ev["Split"] = 0.0;
 }
 
+map<string, double> PlayersEV::get_single_hands_ev(pair<int,int>& players_hand, int dealers_hand, DeckOfCards deck) {
+	init_ev_table();
+	calc_single_hands_ev(players_hand, dealers_hand, deck);
+	return players_ev_table[players_hand][dealers_hand];
+}
+
 void PlayersEV::calc_all_hands_ev(DeckOfCards deck) {
 	for(int first_card = 11; first_card > 1; first_card--) {
 		for(int second_card = first_card; second_card > 1; second_card--) {
-			for(int dealer_card = 11; dealer_card > 1; dealer_card--) {
+			for(int dealers_hand = 11; dealers_hand > 1; dealers_hand--) {
 				pair<int, int> players_hand (first_card, second_card);
-				calc_all_hands_ev_rec(players_hand, dealer_card, deck);
+				calc_single_hands_ev(players_hand, dealers_hand, deck);
 			}
 		}
 	}
 }
 
-int PlayersEV::calc_all_hands_ev_rec(pair<int,int> players_hand, int dealers_hand, DeckOfCards deck) {
+void PlayersEV::calc_single_hands_ev(pair<int,int>& players_hand, int dealers_hand, DeckOfCards deck) {
 	deck.remove_from_deck(players_hand.first);
-	return 0;
+	deck.remove_from_deck(players_hand.second);
+	deck.remove_from_deck(dealers_hand);
+	int count = players_hand.first + players_hand.second;
+	bool soft = ((players_hand.first == 11 || players_hand.second == 11) ? true : false);
+	int last_card = 0;
+	double odds = 1.0;
+	calc_single_hands_ev_rec(players_hand, dealers_hand, count, last_card, deck, odds).first;
 }
 
-void PlayersEV::print_ev_table(int width) {
+pair<string, double> PlayersEV::calc_single_hands_ev_rec(pair<int,int>& players_hand, int dealers_hand, int count, int last_card, DeckOfCards deck, double odds) {
+	pair<string, double> highest_ev;
+	map<string, double> hand_ev;
+	init_hand_ev(hand_ev);
+	DealersOdds dodds(dealer_hits_on_soft_17, deck);
+	
+	//delete-me
+	if(odds > 0.0) {cout << "";}
+	
+	
+	if(last_card != 0) 									//last_card == 0 indicates this is initial run, there is no last card
+			deck.remove_from_deck(last_card);
+			
+	hand_ev["Stand"] = calc_stand_ev(count, dodds.get_dealers_odds()[dealers_hand]);
+	hand_ev["Hit"] = calc_hit_ev(count, dodds);
+	hand_ev["Double"] = calc_double_ev(count, dodds);
+	hand_ev["Split"] = calc_split_ev(count, dodds);
+	
+	if(last_card == 0) {								//last_card == 0 indicates this is initial run, can set object table
+		players_ev_table[players_hand][dealers_hand]["Stand"] = hand_ev["Stand"];
+		players_ev_table[players_hand][dealers_hand]["Hit"] = hand_ev["Hit"];
+		players_ev_table[players_hand][dealers_hand]["Double"] = hand_ev["Double"];
+		players_ev_table[players_hand][dealers_hand]["Split"] = hand_ev["Split"];
+	}
+	
+	highest_ev = get_highest_ev_option(hand_ev);
+	return highest_ev;
+}
+
+double PlayersEV::calc_stand_ev(int count, map<string, double>& dealer_hand_odds) {
+	double total_ev = 0.0;
+	for(map<string, double>::iterator iter = dealer_hand_odds.begin(); iter != dealer_hand_odds.end(); iter++){
+		cout << "\n" << count << " ? " << iter->first;
+		if(iter->first != "Bust") {
+			if(count > stoi(iter->first)) {
+				cout << "\n" << total_ev << " + " << iter->second;
+				total_ev += 1.0 * iter->second;
+				cout << " = " << total_ev;
+			}
+				
+			else if(count < stoi(iter->first)) {
+				cout << "\n" << total_ev << " - " << iter->second;
+				total_ev += -1.0 * iter->second;
+				cout << " = " << total_ev;
+			}
+				
+			else if(count == stoi(iter->first)){
+				cout << "\n" << total_ev << " + 0";
+				total_ev += 0.0 * iter->second;
+				cout << " = " << total_ev;
+			}
+			else {
+				cout << "Count not correctly evaluated in calc_stand_ev\n";
+			}
+				
+		}
+		else {
+			cout << "\nBust!! " << total_ev << " + " << iter->second;;
+			total_ev += 1.0 * iter->second;
+			cout << " = " << total_ev;
+		}
+	}
+	return total_ev;
+}
+
+double PlayersEV::calc_hit_ev(int count, DealersOdds& dodds) {
+	dodds.get_dealers_odds();
+	if(count > 0) {cout << "";}
+	return 2.0;
+}
+
+double PlayersEV::calc_double_ev(int count, DealersOdds& dodds) {
+	dodds.get_dealers_odds();
+	if(count > 0) {cout << "";}
+	return 0.0;
+}
+
+double PlayersEV::calc_split_ev(int count, DealersOdds& dodds) {
+	dodds.get_dealers_odds();
+	if(count > 0) {cout << "";}
+	return 0.1;
+}
+
+pair<string, double> PlayersEV::get_highest_ev_option(map<string, double>& hand_ev) {
+	double highest_ev = -2.1;
+	string highest_ev_option = "Stand";
+	for(map<string, double>::iterator iter = hand_ev.begin(); iter != hand_ev.end(); iter++) {
+		if(iter->second > highest_ev) {
+				highest_ev = iter->second;
+				highest_ev_option = iter->first;
+		}
+	}
+	pair<string, double> highest(highest_ev_option, highest_ev);
+	return highest;
+}
+
+void PlayersEV::print_ev_table(int precision, int width) {
 	print_ev_header(width, get_divider(width));
 	for(int i = 11; i > 1; i--) {
-		//cout << "here\n";
 		for(int j = i; j > 1; j--){
 			pair<int, int> players_hand(i,j);
 			for(int k = 11; k > 1; k --) {
-				print_ev_row(players_hand, k, width, get_divider(width));
+				print_ev_row(players_hand, k, precision, width, get_divider(width));
 			}
 		}
 	}
@@ -66,7 +179,7 @@ string PlayersEV::get_divider(int width) {
 	for(int x = 0; x < width; x++) {
 		div_char += "-";
 	}
-	for(int y = 0; y < 6; y++) {
+	for(int y = 0; y < 7; y++) {
 		divider += div_char;
 	}
 	divider += " \n";
@@ -81,12 +194,13 @@ void PlayersEV::print_ev_header(int width, string divider) {
 	print_cell("Hit   ", width, ' ');
 	print_cell("Double ", width, ' ');
 	print_cell("Split  ", width, ' ');
+	print_cell("Best  ", width, ' ');
 	
 	cout << "|\n";
 	cout << divider;
 }
 
-void PlayersEV::print_ev_row(pair<int, int>& players_hand, int dealers_hand, int width, string divider) {
+void PlayersEV::print_ev_row(pair<int, int>& players_hand, int dealers_hand, int precision, int width, string divider) {
 	string stemp1 = to_string(players_hand.first);
 	if(players_hand.first == 11){
 		stemp1 = "A";
@@ -103,23 +217,34 @@ void PlayersEV::print_ev_row(pair<int, int>& players_hand, int dealers_hand, int
 	}
 	print_cell(" "+stemp+"   ", width, ' ');
 	
-	for(map<string, double>::iterator iter = players_ev_table[players_hand][dealers_hand].begin(); iter!=players_ev_table[players_hand][dealers_hand].end(); iter++){
-		if(iter->second > 0) {
-			stemp = to_string(iter->second).substr(1,4);
-			print_cell(stemp+"   ", width, ' ');
-		}
-		else if(iter->second == 0) {
-			stemp = "- ";
-			print_cell(stemp+"   ", width, ' ');
-		}
-		else {
-			stemp = to_string(iter->second).substr(0,6);
-			print_cell(stemp+" ", width, ' ');
-		}
-	}
+	stemp = get_stemp(players_ev_table[players_hand][dealers_hand]["Stand"], precision);
+	print_cell(stemp, width, ' ');
+	stemp = get_stemp(players_ev_table[players_hand][dealers_hand]["Hit"], precision);
+	print_cell(stemp, width, ' ');
+	stemp = get_stemp(players_ev_table[players_hand][dealers_hand]["Double"], precision);
+	print_cell(stemp, width, ' ');
+	stemp = get_stemp(players_ev_table[players_hand][dealers_hand]["Split"], precision);
+	print_cell(stemp, width, ' ');
+	
+	stemp = get_highest_ev_option(players_ev_table[players_hand][dealers_hand]).first;
+	print_cell(stemp+"   ", width, ' ');
 	
 	cout << "|\n";
 	cout << divider;
+}
+
+string PlayersEV::get_stemp(double ev, int precision) {
+	string stemp;
+	if(ev > 0) {
+		stemp = to_string(ev).substr(0,2+precision)+"  ";
+	}
+	else if(ev == 0) {
+			stemp = "-    ";
+	}
+	else {
+		stemp = to_string(ev).substr(0,3+precision)+"  ";
+	}
+	return stemp;
 }
 
 template<typename T> void PlayersEV::print_cell(T t, const int& width, const char& seperator) {

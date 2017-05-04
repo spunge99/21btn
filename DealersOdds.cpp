@@ -2,7 +2,6 @@
 #include "DealersOdds.h"
 
 DealersOdds::DealersOdds () {
-	number_of_decks = 1;
 	hit_on_soft_17 = 0;
 	init_odds_matrix(dealers_odds);
 }
@@ -38,10 +37,10 @@ void DealersOdds::init_hand_odds(map<string, double>& hand_odds) {
 	hand_odds["17"] = 0.0;
 }
 
-void DealersOdds::print_odds(int width) {
+void DealersOdds::print_odds(int precision, int width) {
 	print_header(width, get_divider(width));
 	for(int i = 11; i > 1; i--){
-		print_row(dealers_odds[i], i, width, get_divider(width));
+		print_row(dealers_odds[i], i, precision, width, get_divider(width));
 	}
 }
 
@@ -72,7 +71,7 @@ void DealersOdds::print_header(int width, string divider) {
 
 }
 
-void DealersOdds::print_row(map<string, double>& hand_odds, int hand_number, int width, string divider){
+void DealersOdds::print_row(map<string, double>& hand_odds, int hand_number, int precision, int width, string divider){
 	string stemp = "";
 	
 	stemp = to_string(hand_number);
@@ -83,15 +82,15 @@ void DealersOdds::print_row(map<string, double>& hand_odds, int hand_number, int
 	
 	for(map<string, double>::iterator iter = hand_odds.begin(); iter!=hand_odds.end(); iter++){
 		if(iter->second > 0) {
-			stemp = to_string(iter->second).substr(1,4);
+			stemp = to_string(iter->second).substr(1,1+precision);
 			print_cell(stemp+"   ", width, ' ');
 		}
 		else if(iter->second == 0) {
-			stemp = "- ";
-			print_cell(stemp+"   ", width, ' ');
+			stemp = "-    ";
+			print_cell(stemp, width, ' ');
 		}
 		else {
-			stemp = to_string(iter->second).substr(0,6);
+			stemp = to_string(iter->second).substr(0,3+precision);
 			print_cell(stemp+" ", width, ' ');
 		}
 	}
@@ -114,11 +113,11 @@ template<typename T> void DealersOdds::print_cell(T t, const int& width, const c
 map<string, double> DealersOdds::get_single_hand_odds(int initial_card, DeckOfCards deck) {
 	init_odds_matrix(dealers_odds);
 	string hand = to_string(initial_card);
-	bool soft = ((initial_card == 11) ? true : false);
 	int count = initial_card;
+	bool soft = ((initial_card == 11) ? true : false);
 	int last_card = initial_card;
 	double odds = 1.0;
-	play_all_hands_rec(hand, count, soft, initial_card, last_card, deck, odds, dealers_odds);
+	play_single_hand_rec(hand, count, soft, initial_card, last_card, deck, odds, dealers_odds);
 	
 	return dealers_odds[initial_card];
 }
@@ -132,7 +131,7 @@ void DealersOdds::play_all_hands(DeckOfCards deck) {
 	int initial_card = 11;
 	int last_card = 11;
 	double odds = 1.0;
-	play_all_hands_rec(hand, count, soft, initial_card, last_card, deck, odds, dealers_odds);
+	play_single_hand_rec(hand, count, soft, initial_card, last_card, deck, odds, dealers_odds);
 	
 	for(int i = 2; i < 11; i++) {
 		hand = to_string(i);
@@ -141,11 +140,11 @@ void DealersOdds::play_all_hands(DeckOfCards deck) {
 		initial_card = i;
 		last_card = i;
 		odds = 1.0;
-		play_all_hands_rec(hand, count, soft, initial_card, last_card, deck, odds, dealers_odds);
+		play_single_hand_rec(hand, count, soft, initial_card, last_card, deck, odds, dealers_odds);
 	}
 }
 
-int DealersOdds::play_all_hands_rec(string hand, int count, bool soft, int initial_card, int last_card, DeckOfCards deck, double odds, map<int, map<string, double> >& dealers_odds) {
+int DealersOdds::play_single_hand_rec(string hand, int count, bool soft, int initial_card, int last_card, DeckOfCards deck, double odds, map<int, map<string, double> >& dealers_odds) {
 	string new_hand;
 	int new_count;
 	bool new_soft;
@@ -193,7 +192,7 @@ int DealersOdds::play_all_hands_rec(string hand, int count, bool soft, int initi
 						case 17:
 							if(hit_on_soft_17 && new_soft) {
 								//cout << "Ace into Hit soft 17 \n";
-								play_all_hands_rec(new_hand, new_count, new_soft, initial_card, 11, deck, new_odds, dealers_odds);
+								play_single_hand_rec(new_hand, new_count, new_soft, initial_card, 11, deck, new_odds, dealers_odds);
 							}
 							else {
 								dealers_odds[initial_card]["17"] = dealers_odds[initial_card]["17"] + new_odds;
@@ -203,7 +202,7 @@ int DealersOdds::play_all_hands_rec(string hand, int count, bool soft, int initi
 				}	
 			}
 			else {
-				play_all_hands_rec(new_hand, new_count, new_soft, initial_card, 11, deck, new_odds, dealers_odds);
+				play_single_hand_rec(new_hand, new_count, new_soft, initial_card, 11, deck, new_odds, dealers_odds);
 			}
 	} 
 	
@@ -219,7 +218,7 @@ int DealersOdds::play_all_hands_rec(string hand, int count, bool soft, int initi
 					if(soft) {
 						new_count = new_count-10;
 						new_soft = false;
-						play_all_hands_rec(new_hand, new_count, new_soft, initial_card, i, deck, new_odds, dealers_odds);
+						play_single_hand_rec(new_hand, new_count, new_soft, initial_card, i, deck, new_odds, dealers_odds);
 					}
 					else {
 						dealers_odds[initial_card]["Bust"] = dealers_odds[initial_card]["Bust"] + new_odds;
@@ -243,7 +242,7 @@ int DealersOdds::play_all_hands_rec(string hand, int count, bool soft, int initi
 						case 17:
 							if(hit_on_soft_17 && new_soft) {
 								//cout << i << " into Hit soft 17 \n";
-								play_all_hands_rec(new_hand, new_count, new_soft, initial_card, i, deck, new_odds, dealers_odds);
+								play_single_hand_rec(new_hand, new_count, new_soft, initial_card, i, deck, new_odds, dealers_odds);
 							}
 							else {
 								dealers_odds[initial_card]["17"] = dealers_odds[initial_card]["17"] + new_odds;
@@ -254,7 +253,7 @@ int DealersOdds::play_all_hands_rec(string hand, int count, bool soft, int initi
 					
 			}
 			else {
-				play_all_hands_rec(new_hand, new_count, new_soft, initial_card, i, deck, new_odds, dealers_odds);
+				play_single_hand_rec(new_hand, new_count, new_soft, initial_card, i, deck, new_odds, dealers_odds);
 			}
 		}
 	}

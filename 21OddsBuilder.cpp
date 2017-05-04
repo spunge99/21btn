@@ -49,23 +49,24 @@ int main(int argc, char** argv)
 	cout << "number of decks = "<< CONFIG["NUMBER_OF_DECKS"] <<"\n";
 	if(HIT_ON_SOFT_17)
 		CONFIG["HIT_ON_SOFT_17"] = to_string(HIT_ON_SOFT_17);
-	string message = stoi(CONFIG["HIT_ON_SOFT_17"], &sz) ? "Dealer hits on soft 17\n" : "Dealer stays on soft 17\n";
+	string message = stoi(CONFIG["HIT_ON_SOFT_17"], &sz) ? "Dealer hits on soft 17\n" : "Dealer stands on soft 17\n";
 	cout << message;
 	
 	DeckOfCards deck(stoi(CONFIG["NUMBER_OF_DECKS"], &sz));
 
 	DealersOdds dodds(stoi(CONFIG["HIT_ON_SOFT_17"], &sz), deck);
 	
-	//dodds.print_odds(stoi(CONFIG["CELL_WIDTH"], &sz));
+	dodds.print_odds(stoi(CONFIG["PRECISION"], &sz), stoi(CONFIG["CELL_WIDTH"], &sz));
 	
 	dodds.get_single_hand_odds(6, deck);
 	dodds.print_header(stoi(CONFIG["CELL_WIDTH"], &sz), dodds.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
-	dodds.print_row(dodds.get_dealers_odds()[6], 6, stoi(CONFIG["CELL_WIDTH"], &sz), dodds.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
+	dodds.print_row(dodds.get_dealers_odds()[6], 6, stoi(CONFIG["PRECISION"], &sz), stoi(CONFIG["CELL_WIDTH"], &sz), dodds.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
 	
-	PlayersEV pev;
+	PlayersEV pev(stoi(CONFIG["HIT_ON_SOFT_17"], &sz));
 	pair<int, int> players_hand(11,11);
+	pev.get_single_hands_ev(players_hand, 6, deck);
 	pev.print_ev_header(stoi(CONFIG["CELL_WIDTH"], &sz), pev.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
-	pev.print_ev_row(players_hand, 6, stoi(CONFIG["CELL_WIDTH"], &sz), pev.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
+	pev.print_ev_row(players_hand, 6, stoi(CONFIG["PRECISION"], &sz), stoi(CONFIG["CELL_WIDTH"], &sz), pev.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
 	
 	//pev.print_ev_table(stoi(CONFIG["CELL_WIDTH"], &sz));
 	
