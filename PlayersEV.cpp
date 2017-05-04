@@ -31,26 +31,37 @@ void PlayersEV::init_hand_ev(map<string, double>& hand_ev) {
 	hand_ev["Split"] = 0.0;
 }
 
+map<string, double> PlayersEV::get_single_hands_ev(pair<int,int> players_hand, int dealers_hand, DeckOfCards deck) {
+	init_ev_table();
+	calc_single_hands_ev(players_hand, dealers_hand, deck);
+	return players_ev_table[players_hand][dealers_hand];
+}
+
 void PlayersEV::calc_all_hands_ev(DeckOfCards deck) {
 	for(int first_card = 11; first_card > 1; first_card--) {
 		for(int second_card = first_card; second_card > 1; second_card--) {
-			for(int dealer_card = 11; dealer_card > 1; dealer_card--) {
+			for(int dealers_hand = 11; dealers_hand > 1; dealers_hand--) {
 				pair<int, int> players_hand (first_card, second_card);
-				calc_all_hands_ev_rec(players_hand, dealer_card, deck);
+				calc_single_hands_ev(players_hand, dealers_hand, deck);
 			}
 		}
 	}
 }
 
-int PlayersEV::calc_all_hands_ev_rec(pair<int,int> players_hand, int dealers_hand, DeckOfCards deck) {
+void PlayersEV::calc_single_hands_ev(pair<int,int> players_hand, int dealers_hand, DeckOfCards deck) {
 	deck.remove_from_deck(players_hand.first);
+	deck.remove_from_deck(players_hand.first);
+	deck.remove_from_deck(dealers_hand);
+	double odds = 1.0;
+}
+
+int PlayersEV::calc_single_hands_ev_rec(pair<int,int> players_hand, int dealers_hand, DeckOfCards deck) {
 	return 0;
 }
 
 void PlayersEV::print_ev_table(int width) {
 	print_ev_header(width, get_divider(width));
 	for(int i = 11; i > 1; i--) {
-		//cout << "here\n";
 		for(int j = i; j > 1; j--){
 			pair<int, int> players_hand(i,j);
 			for(int k = 11; k > 1; k --) {

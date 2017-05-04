@@ -22,9 +22,10 @@ class PlayersEV{
 		void init_ev_row(map<int, map<string, double> >&);
 		void init_hand_ev(map<string, double>&);
 		
-		map<string, double> calc_single_hand_ev(pair<int,int>, int, DeckOfCards);
+		map<string, double> get_single_hands_ev(pair<int,int>, int, DeckOfCards);
 		void calc_all_hands_ev(DeckOfCards);
-		int calc_all_hands_ev_rec(pair<int,int>, int, DeckOfCards);
+		void calc_single_hands_ev(pair<int,int>, int, DeckOfCards);
+		int calc_single_hands_ev_rec(pair<int,int>, int, DeckOfCards);
 		
 		void print_ev_table(int);
 		string get_divider(int);
