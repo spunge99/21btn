@@ -13,6 +13,7 @@ using namespace std;
 class PlayersEV{
 	private:
 		int dealer_hits_on_soft_17; 
+		double blackjack_payout;
 		map<pair<int,int>, map<int, map<string, double> > > players_ev_table;
 	public:
 		PlayersEV();
@@ -27,7 +28,7 @@ class PlayersEV{
 		map<string, double> get_single_hands_ev(pair<int,int>&, int, DeckOfCards);
 		void calc_all_hands_ev(DeckOfCards);
 		void calc_single_hands_ev(pair<int,int>&, int, DeckOfCards);
-		pair<string, double> calc_single_hands_ev_rec(pair<int,int>&, int, int, int, DeckOfCards, double odds);
+		pair<string, double> calc_single_hands_ev_rec(pair<int,int>&, int, int, bool, int, DeckOfCards, double odds);
 		double calc_stand_ev(int, map<string, double>&);
 		double calc_hit_ev(int, DealersOdds&);
 		double calc_double_ev(int, DealersOdds&);

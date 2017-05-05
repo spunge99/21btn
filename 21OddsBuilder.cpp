@@ -32,7 +32,7 @@ void init_Config();
 int main(int argc, char** argv)
 {
     int c, option_index=0;
-	string::size_type sz;
+	//string::size_type sz;
 	load_Config(CONFIG_FILE_NAME);
 	
 	while ((c = getopt_long (argc, argv, "d:", long_options, &option_index)) != EOF)
@@ -49,26 +49,29 @@ int main(int argc, char** argv)
 	cout << "number of decks = "<< CONFIG["NUMBER_OF_DECKS"] <<"\n";
 	if(HIT_ON_SOFT_17)
 		CONFIG["HIT_ON_SOFT_17"] = to_string(HIT_ON_SOFT_17);
-	string message = stoi(CONFIG["HIT_ON_SOFT_17"], &sz) ? "Dealer hits on soft 17\n" : "Dealer stands on soft 17\n";
+	string message = stoi(CONFIG["HIT_ON_SOFT_17"]) ? "Dealer hits on soft 17\n" : "Dealer stands on soft 17\n";
 	cout << message;
 	
-	DeckOfCards deck(stoi(CONFIG["NUMBER_OF_DECKS"], &sz));
+	DeckOfCards deck(stoi(CONFIG["NUMBER_OF_DECKS"]));
 
-	DealersOdds dodds(stoi(CONFIG["HIT_ON_SOFT_17"], &sz), deck);
+	DealersOdds dodds(stoi(CONFIG["HIT_ON_SOFT_17"]), deck);
 	
-	dodds.print_odds(stoi(CONFIG["PRECISION"], &sz), stoi(CONFIG["CELL_WIDTH"], &sz));
+	//dodds.print_odds(stoi(CONFIG["PRECISION"]), stoi(CONFIG["CELL_WIDTH"]));
 	
 	dodds.get_single_hand_odds(6, deck);
-	dodds.print_header(stoi(CONFIG["CELL_WIDTH"], &sz), dodds.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
-	dodds.print_row(dodds.get_dealers_odds()[6], 6, stoi(CONFIG["PRECISION"], &sz), stoi(CONFIG["CELL_WIDTH"], &sz), dodds.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
+	dodds.print_header(stoi(CONFIG["CELL_WIDTH"]), dodds.get_divider(stoi(CONFIG["CELL_WIDTH"])));
+	dodds.print_row(dodds.get_dealers_odds()[6], 6, stoi(CONFIG["PRECISION"]), stoi(CONFIG["CELL_WIDTH"]), dodds.get_divider(stoi(CONFIG["CELL_WIDTH"])));
 	
-	PlayersEV pev(stoi(CONFIG["HIT_ON_SOFT_17"], &sz));
-	pair<int, int> players_hand(11,11);
+	PlayersEV pev(stoi(CONFIG["HIT_ON_SOFT_17"]));
+	pair<int, int> players_hand(10,11);
+	
+	//pev.calc_all_hands_ev(deck);
 	pev.get_single_hands_ev(players_hand, 6, deck);
-	pev.print_ev_header(stoi(CONFIG["CELL_WIDTH"], &sz), pev.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
-	pev.print_ev_row(players_hand, 6, stoi(CONFIG["PRECISION"], &sz), stoi(CONFIG["CELL_WIDTH"], &sz), pev.get_divider(stoi(CONFIG["CELL_WIDTH"], &sz)));
 	
-	//pev.print_ev_table(stoi(CONFIG["CELL_WIDTH"], &sz));
+	pev.print_ev_header(stoi(CONFIG["CELL_WIDTH"]), pev.get_divider(stoi(CONFIG["CELL_WIDTH"])));
+	pev.print_ev_row(players_hand, 6, stoi(CONFIG["PRECISION"]), stoi(CONFIG["CELL_WIDTH"]), pev.get_divider(stoi(CONFIG["CELL_WIDTH"])));
+	
+	pev.print_ev_table(stoi(CONFIG["PRECISION"]), stoi(CONFIG["CELL_WIDTH"]));
 	
     return 0;
 }
