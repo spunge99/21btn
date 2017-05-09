@@ -22,6 +22,7 @@ class DeckOfCards{
 			return cards_remaining[card];}
 		
 		void remove_from_deck(int);
+		void add_to_deck(int);
 		void init_deck_of_cards(int);
 		void print_current_deck();
 };

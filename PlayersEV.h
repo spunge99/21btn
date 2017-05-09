@@ -29,9 +29,9 @@ class PlayersEV{
 		void calc_all_hands_ev(DeckOfCards);
 		void calc_single_hands_ev(pair<int,int>&, int, DeckOfCards);
 		pair<string, double> calc_single_hands_ev_rec(pair<int,int>&, int, int, bool, int, DeckOfCards, double odds);
-		double calc_stand_ev(int, map<string, double>&);
+		double calc_stand_ev(int, map<string, double>&, double);
 		double calc_hit_ev(int, DealersOdds&);
-		double calc_double_ev(int, DealersOdds&);
+		double calc_double_ev(int, int, bool, DealersOdds&, DeckOfCards, double);
 		double calc_split_ev(int, DealersOdds&);
 		pair<string, double> get_highest_ev_option(map<string, double>&);
 		

@@ -69,7 +69,6 @@ void PlayersEV::calc_all_hands_ev(DeckOfCards deck) {
 void PlayersEV::calc_single_hands_ev(pair<int,int>& players_hand, int dealers_hand, DeckOfCards deck) {
 	deck.remove_from_deck(players_hand.first);
 	deck.remove_from_deck(players_hand.second);
-	deck.remove_from_deck(dealers_hand);
 	int count = players_hand.first + players_hand.second;
 	bool soft = ((players_hand.first == 11 || players_hand.second == 11) ? true : false);
 	int last_card = 0;
@@ -81,7 +80,7 @@ pair<string, double> PlayersEV::calc_single_hands_ev_rec(pair<int,int>& players_
 	pair<string, double> highest_ev;
 	map<string, double> hand_ev;
 	init_hand_ev(hand_ev);
-	DealersOdds dodds(dealer_hits_on_soft_17, deck);
+	DealersOdds dodds(dealer_hits_on_soft_17);
 	
 	if(count > 21) {
 		if(soft) {
@@ -99,14 +98,17 @@ pair<string, double> PlayersEV::calc_single_hands_ev_rec(pair<int,int>& players_
 	//delete-me
 	if(odds > 0.0) {cout << "";}
 	
+	/*if(last_card != 0) 									//last_card == 0 indicates this is initial run, there is no last card
+			deck.remove_from_deck(last_card);*/
 	
-	if(last_card != 0) 									//last_card == 0 indicates this is initial run, there is no last card
-			deck.remove_from_deck(last_card);
-			
-	hand_ev["Stand"] = calc_stand_ev(count, dodds.get_dealers_odds()[dealers_hand]);
+	dodds.get_single_hand_odds(dealers_hand, deck);
+	
+	hand_ev["Stand"] = calc_stand_ev(count, dodds.get_dealers_odds()[dealers_hand], odds);
 	hand_ev["Hit"] = calc_hit_ev(count, dodds);
-	hand_ev["Double"] = calc_double_ev(count, dodds);
-	hand_ev["Split"] = calc_split_ev(count, dodds);
+	if(last_card < 2) {
+		hand_ev["Double"] = calc_double_ev(count, dealers_hand, soft, dodds, deck, odds);
+		hand_ev["Split"] = calc_split_ev(count, dodds);
+	}
 	
 	if(last_card == 0) {								//last_card == 0 indicates this is initial run, can set object table
 		if(count == 21) {
@@ -124,9 +126,9 @@ pair<string, double> PlayersEV::calc_single_hands_ev_rec(pair<int,int>& players_
 	return highest_ev;
 }
 
-double PlayersEV::calc_stand_ev(int count, map<string, double>& dealer_hand_odds) {
+double PlayersEV::calc_stand_ev(int count, map<string, double>& dealers_hand_odds, double odds) {
 	double total_ev = 0.0;
-	for(map<string, double>::iterator iter = dealer_hand_odds.begin(); iter != dealer_hand_odds.end(); iter++){
+	for(map<string, double>::iterator iter = dealers_hand_odds.begin(); iter != dealers_hand_odds.end(); iter++){
 		//cout << "\n" << count << " ? " << iter->first;
 		if(iter->first != "Bust") {
 			if(count > stoi(iter->first)) {
@@ -157,25 +159,125 @@ double PlayersEV::calc_stand_ev(int count, map<string, double>& dealer_hand_odds
 			//cout << " = " << total_ev;
 		}
 	}
+	//cout << "\n" << total_ev;
+	total_ev = total_ev * odds;
 	return total_ev;
 }
 
 double PlayersEV::calc_hit_ev(int count, DealersOdds& dodds) {
+	/*
+	
+	//prototype// double calc_hit_ev(pair<int,int>& players_hand, int count, int dealers_hand, bool soft, int last_card, DeckOfCards deck, double odds);
+	
+	pair<string, double> highest_ev;
+	int new_count;
+	double new_odds;
+	double total_ev = 0.0;
+	
+	int i = 2;
+	bool still_hitting = true;
+	while(still_hitting) {
+		//cout << "\n";
+		if(deck.get_cards_remaining(i) > 0) {
+			new_odds = odds * deck.get_cards_remaining(i)/deck.get_deck_size();
+			deck.remove_from_deck(i);
+			cout << "\n" << count;
+			if(i == 11) {
+				if(soft) {
+					new_count = count + 1;
+				}
+				else if(count < 11) {
+					new_count = count + i;
+					soft = true;
+				}
+				else
+					new_count = count + i;
+			}	
+			else
+				new_count = count + i;
+			if(soft && new_count > 21) {
+				soft = false;
+				new_count = new_count - 10;
+			}
+			if(!soft && new_count > 21) {
+				total_ev += -1.0 * new_odds;
+			}
+			else {
+				highest_ev = calc_single_hands_ev_rec(players_hand, dealers_hand, new_count, soft, last_card, deck, new_odds);
+				cout << "\n" << highest_ev.first;
+				total_ev += highest_ev.second;
+			}
+			if(highest_ev.first == "Stand") {
+					still_hitting = false;
+					cout << "\nBreaking...";
+			}
+			deck.add_to_deck(i);
+		}
+		i++;
+	}
+	return total_ev;
+	
+	*/
 	dodds.get_dealers_odds();
 	if(count > 0) {cout << "";}
-	return 2.0;
+	return -2.0;
 }
 
-double PlayersEV::calc_double_ev(int count, DealersOdds& dodds) {
-	dodds.get_dealers_odds();
-	if(count > 0) {cout << "";}
-	return 0.0;
+double PlayersEV::calc_double_ev(int count, int dealers_hand, bool soft, DealersOdds& dodds, DeckOfCards deck, double odds) {
+	int new_count;
+	double new_odds;
+	double total_ev = 0.0;
+	
+	for(int i = 11; i > 1; i--) {
+		if(deck.get_cards_remaining(i) > 0) {
+			new_odds = odds * deck.get_cards_remaining(i)/deck.get_deck_size();
+			deck.remove_from_deck(i);
+			if(i == 11 && soft)
+				new_count = count + 1;
+			else
+				new_count = count + i;
+			if(soft && new_count > 21) {
+				soft = false;
+				new_count = new_count - 10;
+			}
+			if(!soft && new_count > 21) {
+				total_ev += -2.0 * new_odds;
+			}
+			else {
+				map<string, double> dealers_hand_odds = dodds.get_single_hand_odds(dealers_hand, deck);
+				for(map<string, double>::iterator iter = dealers_hand_odds.begin(); iter != dealers_hand_odds.end(); iter++){
+					if(iter->first != "Bust") {
+						if(new_count > stoi(iter->first)) {
+							total_ev += 2.0 * iter->second * new_odds;
+						}
+				
+						else if(new_count < stoi(iter->first)) {
+							total_ev += -2.0 * iter->second * new_odds;
+						}
+				
+						else if(new_count == stoi(iter->first)){
+							total_ev += 0.0 * iter->second * new_odds;
+						}
+						else {
+							cout << "Count not correctly evaluated in calc_double_ev\n";
+						}
+				
+					}
+					else {
+						total_ev += 2.0 * iter->second * new_odds;
+					}
+				}
+			}
+			deck.add_to_deck(i);
+		}
+	}
+	return total_ev;
 }
 
 double PlayersEV::calc_split_ev(int count, DealersOdds& dodds) {
 	dodds.get_dealers_odds();
 	if(count > 0) {cout << "";}
-	return 0.1;
+	return -2.1;
 }
 
 pair<string, double> PlayersEV::get_highest_ev_option(map<string, double>& hand_ev) {

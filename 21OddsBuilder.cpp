@@ -32,7 +32,6 @@ void init_Config();
 int main(int argc, char** argv)
 {
     int c, option_index=0;
-	//string::size_type sz;
 	load_Config(CONFIG_FILE_NAME);
 	
 	while ((c = getopt_long (argc, argv, "d:", long_options, &option_index)) != EOF)
@@ -54,7 +53,7 @@ int main(int argc, char** argv)
 	
 	DeckOfCards deck(stoi(CONFIG["NUMBER_OF_DECKS"]));
 
-	DealersOdds dodds(stoi(CONFIG["HIT_ON_SOFT_17"]), deck);
+	DealersOdds dodds(stoi(CONFIG["HIT_ON_SOFT_17"]));
 	
 	//dodds.print_odds(stoi(CONFIG["PRECISION"]), stoi(CONFIG["CELL_WIDTH"]));
 	
@@ -63,15 +62,25 @@ int main(int argc, char** argv)
 	dodds.print_row(dodds.get_dealers_odds()[6], 6, stoi(CONFIG["PRECISION"]), stoi(CONFIG["CELL_WIDTH"]), dodds.get_divider(stoi(CONFIG["CELL_WIDTH"])));
 	
 	PlayersEV pev(stoi(CONFIG["HIT_ON_SOFT_17"]));
-	pair<int, int> players_hand(10,11);
+	pair<int, int> players_hand1(8,10);
+	int dealers_hand1 = 3;
+	pair<int, int> players_hand2(2,3);
+	int dealers_hand2 = 11;
+	pair<int, int> players_hand3(11,6);
+	int dealers_hand3 = 6;
 	
 	//pev.calc_all_hands_ev(deck);
-	pev.get_single_hands_ev(players_hand, 6, deck);
 	
 	pev.print_ev_header(stoi(CONFIG["CELL_WIDTH"]), pev.get_divider(stoi(CONFIG["CELL_WIDTH"])));
-	pev.print_ev_row(players_hand, 6, stoi(CONFIG["PRECISION"]), stoi(CONFIG["CELL_WIDTH"]), pev.get_divider(stoi(CONFIG["CELL_WIDTH"])));
 	
-	pev.print_ev_table(stoi(CONFIG["PRECISION"]), stoi(CONFIG["CELL_WIDTH"]));
+	pev.get_single_hands_ev(players_hand1, dealers_hand1, deck);
+	pev.print_ev_row(players_hand1, dealers_hand1, stoi(CONFIG["PRECISION"]), stoi(CONFIG["CELL_WIDTH"]), pev.get_divider(stoi(CONFIG["CELL_WIDTH"])));
+	pev.get_single_hands_ev(players_hand2, dealers_hand2, deck);
+	pev.print_ev_row(players_hand2, dealers_hand2, stoi(CONFIG["PRECISION"]), stoi(CONFIG["CELL_WIDTH"]), pev.get_divider(stoi(CONFIG["CELL_WIDTH"])));
+	pev.get_single_hands_ev(players_hand3, dealers_hand3, deck);
+	pev.print_ev_row(players_hand3, dealers_hand3, stoi(CONFIG["PRECISION"]), stoi(CONFIG["CELL_WIDTH"]), pev.get_divider(stoi(CONFIG["CELL_WIDTH"])));
+	
+	//pev.print_ev_table(stoi(CONFIG["PRECISION"]), stoi(CONFIG["CELL_WIDTH"]));
 	
     return 0;
 }

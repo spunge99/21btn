@@ -14,6 +14,11 @@ void DeckOfCards::remove_from_deck(int card) {
 	deck_size--;
 }
 
+void DeckOfCards::add_to_deck(int card) {
+	cards_remaining[card] = cards_remaining[card] + 1;
+	deck_size++;
+}
+
 void DeckOfCards::init_deck_of_cards(int number_of_decks) {
 	deck_size = 52 * number_of_decks;
 	cards_remaining[11] = 4 * number_of_decks;

@@ -6,10 +6,9 @@ DealersOdds::DealersOdds () {
 	init_odds_matrix(dealers_odds);
 }
 
-DealersOdds::DealersOdds (int hit, DeckOfCards deck) {
+DealersOdds::DealersOdds (int hit) {
 	hit_on_soft_17 = hit;
 	init_odds_matrix(dealers_odds);
-	play_all_hands(deck);
 }
 
 void DealersOdds::init_odds_matrix(map<int, map<string, double> >& dealers_odds) {

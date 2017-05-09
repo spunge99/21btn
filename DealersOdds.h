@@ -16,7 +16,7 @@ class DealersOdds{
 		map<int, map<string, double> > dealers_odds;
 	public:
 		DealersOdds();
-		DealersOdds(int, DeckOfCards);
+		DealersOdds(int);
 		map<int, map<string, double> > get_dealers_odds() {
 			return dealers_odds; }
 		void init_odds_matrix(map<int, map<string, double> >&);
